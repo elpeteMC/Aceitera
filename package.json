@@ -1,8 +1,8 @@
 {
   "name": "aceitera",
   "version": "1.0.0",
-  "description": "![Licencia](https://img.shields.io/github/license/CodigosdeProgramacion/plantilla-crud-bootstrap)",
-  "main": "index.js",
+  "description": "Aplicación para gestión de inventario de productos en una aceitera.",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
@@ -13,9 +13,6 @@
   "dependencies": {
     "body-parser": "^1.20.3",
     "express": "^4.21.1",
-    "firebase-admin": "^13.0.0",
-    "mysql2": "^3.11.4",
-    "nodemon": "^3.1.7",
-    "sqlite3": "^5.1.7"
+    "nodemon": "^3.1.7"
   }
 }
