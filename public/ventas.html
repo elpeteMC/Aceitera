@@ -1,0 +1,48 @@
+<!-- ventas.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Venta</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Registrar Venta</h2>
+        <form id="ventaForm">
+            <div class="form-group">
+                <label>ID del Producto</label>
+                <input type="number" class="form-control" id="producto_id" required>
+            </div>
+            <div class="form-group">
+                <label>Cantidad Vendida</label>
+                <input type="number" class="form-control" id="cantidad_vendida" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Registrar Venta</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('ventaForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const producto_id = document.getElementById('producto_id').value;
+            const cantidad_vendida = document.getElementById('cantidad_vendida').value;
+
+            fetch('http://localhost:3000/ventas', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ producto_id, cantidad_vendida })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                document.getElementById('ventaForm').reset();
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>

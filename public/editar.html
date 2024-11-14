@@ -1,0 +1,68 @@
+<!-- editar.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Producto</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Editar Producto</h2>
+        <form id="editarProductoForm">
+            <div class="form-group">
+                <label>Nombre</label>
+                <input type="text" class="form-control" id="nombre" required>
+            </div>
+            <div class="form-group">
+                <label>Precio</label>
+                <input type="number" class="form-control" id="precio" required>
+            </div>
+            <div class="form-group">
+                <label>Cantidad</label>
+                <input type="number" class="form-control" id="cantidad" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            <a href="index.html" class="btn btn-secondary ml-2">Regresar</a>
+        </form>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
+
+        // Cargar los datos del producto
+        fetch(`/productos/${productId}`)
+            .then(response => response.json())
+            .then(product => {
+                document.getElementById('nombre').value = product.nombre;
+                document.getElementById('precio').value = product.precio;
+                document.getElementById('cantidad').value = product.cantidad;
+            })
+            .catch(error => console.error('Error:', error));
+
+        // Actualizar los datos del producto
+        document.getElementById('editarProductoForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const nombre = document.getElementById('nombre').value;
+            const precio = document.getElementById('precio').value;
+            const cantidad = document.getElementById('cantidad').value;
+
+            fetch(`/productos/${productId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ nombre, precio, cantidad })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                window.location.href = 'index.html';
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>
