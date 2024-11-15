@@ -1,80 +1,151 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-100">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrar Ventas</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Aceitera - Registro de Ventas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 </head>
-<body class="container mt-5">
-    <h2 class="mb-4">Registrar Venta</h2>
-    <form id="ventaForm">
-        <div class="form-group mb-3">
-            <label for="producto">Producto</label>
-            <select id="producto" class="form-select" required>
-                <!-- Opciones se cargarán dinámicamente -->
-            </select>
+<body class="d-flex flex-column h-100">
+    <header class="bg-success text-white text-center py-3">
+        <h1>Aceitera - Registro de Ventas</h1>
+    </header>
+    <main class="flex-shrink-0">
+        <div class="container mt-4">
+            <h3 class="mb-4">Registrar Nueva Venta</h3>
+            <form id="venta-form" class="needs-validation" novalidate>
+                <div class="mb-3">
+                    <label for="producto" class="form-label">Producto</label>
+                    <select id="producto" class="form-select" required>
+                        <option value="" selected disabled>Selecciona un producto</option>
+                        <!-- Los productos se llenarán dinámicamente -->
+                    </select>
+                    <div class="invalid-feedback">Por favor, selecciona un producto.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="cantidad" class="form-label">Cantidad</label>
+                    <input type="number" id="cantidad" class="form-control" min="1" required>
+                    <div class="invalid-feedback">Por favor, ingresa una cantidad válida.</div>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <a href="index.html" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-success">Registrar Venta</button>
+                </div>
+            </form>
+
+            <hr class="my-4">
+
+            <h3 class="mb-4">Ventas Registradas</h3>
+            <table class="table table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Total (Q)</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody id="ventas-list">
+                    <!-- Las ventas registradas se llenarán dinámicamente -->
+                </tbody>
+            </table>
         </div>
-        <div class="form-group mb-3">
-            <label for="cantidad">Cantidad</label>
-            <input type="number" id="cantidad" class="form-control" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Registrar Venta</button>
-    </form>
-    <a href="index.html" class="btn btn-secondary mt-3">Volver al Inicio</a>
+    </main>
+    <footer class="mt-auto bg-light text-center py-3">
+        <small>Sistema de Gestión de Aceitera &copy; 2024</small>
+    </footer>
 
     <script>
-        // Cargar productos en el select
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarProductos();
+            cargarVentas();
+
+            const form = document.getElementById('venta-form');
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault(); // Evitar el envío por defecto
+                event.stopPropagation();
+
+                if (form.checkValidity()) {
+                    await registrarVenta();
+                }
+
+                form.classList.add('was-validated');
+            });
+        });
+
+        // Cargar productos disponibles
         async function cargarProductos() {
             try {
                 const response = await fetch('http://localhost:3000/productos');
-                if (!response.ok) throw new Error("Error al obtener productos");
-                const productos = await response.json();
-                
-                const select = document.getElementById('producto');
-                select.innerHTML = ''; // Limpiar opciones anteriores
+                if (!response.ok) throw new Error('Error al cargar los productos.');
 
-                productos.forEach(producto => {
+                const productos = await response.json();
+                const productoSelect = document.getElementById('producto');
+                productos.forEach((producto) => {
                     const option = document.createElement('option');
-                    option.value = producto.id;
-                    option.textContent = `${producto.nombre} (Cantidad: ${producto.cantidad})`;
-                    select.appendChild(option);
+                    option.value = producto.id; // Asumiendo que el backend retorna un ID único
+                    option.textContent = `${producto.nombre} (Q${producto.precio})`;
+                    productoSelect.appendChild(option);
                 });
             } catch (error) {
                 console.error('Error al cargar productos:', error);
-                alert('Hubo un problema al cargar los productos');
+                alert('No se pudieron cargar los productos. Intenta más tarde.');
             }
         }
 
-        // Registrar la venta
-        document.getElementById('ventaForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
+        // Registrar nueva venta
+        async function registrarVenta() {
             const productoId = document.getElementById('producto').value;
-            const cantidad_vendida = parseInt(document.getElementById('cantidad').value); // Cambiado a cantidad_vendida
+            const cantidad = parseInt(document.getElementById('cantidad').value, 10);
 
             try {
-                const response = await fetch(`http://localhost:3000/ventas`, {
+                const response = await fetch('http://localhost:3000/ventas', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ productoId, cantidad_vendida }) // Cambiado a cantidad_vendida
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ productoId, cantidad }),
                 });
 
-                const data = await response.json();
-                if (data.error) {
-                    alert(data.error);
-                } else {
-                    alert('Venta registrada exitosamente');
-                    document.getElementById('ventaForm').reset();
-                }
+                if (!response.ok) throw new Error('Error al registrar la venta.');
+
+                alert('Venta registrada con éxito.');
+                cargarVentas(); // Actualizar tabla de ventas
+                document.getElementById('venta-form').reset();
+                document.getElementById('venta-form').classList.remove('was-validated');
             } catch (error) {
                 console.error('Error al registrar venta:', error);
-                alert('Hubo un problema al registrar la venta');
+                alert('No se pudo registrar la venta. Intenta de nuevo más tarde.');
             }
-        });
+        }
 
-        // Llamar la función de cargar productos al cargar la página
-        cargarProductos();
+        // Cargar ventas registradas
+        async function cargarVentas() {
+            try {
+                const response = await fetch('http://localhost:3000/ventas');
+                if (!response.ok) throw new Error('Error al cargar las ventas.');
+
+                const ventas = await response.json();
+                const ventasList = document.getElementById('ventas-list');
+                ventasList.innerHTML = ''; // Limpiar tabla
+
+                ventas.forEach((venta, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${venta.productoNombre}</td>
+                        <td>${venta.cantidad}</td>
+                        <td>Q${(venta.cantidad * venta.precio).toFixed(2)}</td>
+                        <td>${new Date(venta.fecha).toLocaleString()}</td>
+                    `;
+                    ventasList.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error al cargar ventas:', error);
+                alert('No se pudieron cargar las ventas. Intenta más tarde.');
+            }
+        }
     </script>
 </body>
 </html>

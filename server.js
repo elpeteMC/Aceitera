@@ -1,16 +1,23 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const { createClient } = require('@supabase/supabase-js');
+const cors = require('cors');
+
 
 
 const app = express();
+app.use(cors({
+    origin: 'https://aceitera.netlify.app', 
+    methods: ['GET', 'POST', 'PUT', 'DELETE']
+}));
+
 const PORT = process.env.PORT || 3000;
 app.use(express.static('public'));
 app.use(bodyParser.json());
 
 // Configuración de Supabase
-const supabaseUrl = 'https://ponaowtbwxttwzndtfsa.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvbmFvd3Rid3h0dHd6bmR0ZnNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzE2MTkzNTYsImV4cCI6MjA0NzE5NTM1Nn0.q1uNT4zBw3HlEDxO7M_sNN-Y2wXbb4qml6f4Is8N7Zw';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Ruta GET para obtener productos
