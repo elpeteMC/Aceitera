@@ -1,4 +1,3 @@
-<!-- nuevo.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -29,25 +28,31 @@
     </div>
 
     <script>
-        document.getElementById('productoForm').addEventListener('submit', function(e) {
+        // Solo un EventListener para manejar el envío del formulario
+        document.getElementById('productoForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+
             const nombre = document.getElementById('nombre').value;
             const precio = document.getElementById('precio').value;
             const cantidad = document.getElementById('cantidad').value;
 
-            fetch('http://localhost:3000/productos', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ nombre, precio, cantidad })
-            })
-            .then(response => response.json())
-            .then(data => {
+            try {
+                const response = await fetch('http://localhost:3000/productos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre, precio, cantidad })
+                });
+
+                const data = await response.json();
                 alert(data.message);
                 document.getElementById('productoForm').reset();
-            })
-            .catch(error => console.error('Error:', error));
+
+                // Guardar señal en localStorage para recargar en index.html
+                localStorage.setItem('reload', 'true');
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Error:', error);
+            }
         });
     </script>
 </body>
