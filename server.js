@@ -3,87 +3,72 @@ const bodyParser = require('body-parser');
 const { createClient } = require('@supabase/supabase-js');
 const cors = require('cors');
 
-
-
 const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
 app.use(cors({
-    origin: 'https://aceitera.netlify.app', 
+    origin: 'https://aceitera.netlify.app',
     methods: ['GET', 'POST', 'PUT', 'DELETE']
 }));
-
-const PORT = process.env.PORT || 3000;
 app.use(express.static('public'));
 app.use(bodyParser.json());
 
 // Configuración de Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+    console.error('Faltan configuraciones de SUPABASE_URL o SUPABASE_KEY');
+    process.exit(1);
+}
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Ruta GET para obtener productos
+// **Rutas**
+// Obtener productos
 app.get('/productos', async (req, res) => {
-    console.log("GET /productos llamado"); // Mensaje de depuración
     try {
-        const { data, error } = await supabase
-            .from('productos') // Asegúrate de que el nombre coincide con tu tabla en Supabase
-            .select('*');
-        
+        const { data, error } = await supabase.from('productos').select('*');
         if (error) throw error;
-        
-        console.log("Productos obtenidos:", data); // Imprimir datos obtenidos
         res.json(data);
     } catch (err) {
-        console.error('Error al obtener productos:', err);
+        console.error('Error al obtener productos:', err.message);
         res.status(500).json({ error: 'Error al obtener productos' });
     }
 });
 
-
-// Ruta POST para agregar productos
-
+// Agregar productos
 app.post('/productos', async (req, res) => {
     const { nombre, precio, cantidad, descripcion } = req.body;
-
     try {
         const { data, error } = await supabase
             .from('productos')
             .insert([{ nombre, precio, cantidad, descripcion }]);
-
-        if (error) {
-            console.error('Error de Supabase:', error); // Log detallado del error
-            throw error;
-        }
-
+        if (error) throw error;
         res.status(201).json({ message: 'Producto agregado', producto: data });
     } catch (err) {
-        res.status(500).json({ error: 'Error al agregar el producto', detalle: err.message });
+        console.error('Error al agregar producto:', err.message);
+        res.status(500).json({ error: 'Error al agregar producto' });
     }
 });
-// Ruta DELETE para eliminar un producto
+
+// Eliminar producto
 app.delete('/productos/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        const { error } = await supabase
-            .from('productos')
-            .delete()
-            .eq('id', id);
-
+        const { error } = await supabase.from('productos').delete().eq('id', id);
         if (error) throw error;
         res.status(200).json({ message: 'Producto eliminado' });
     } catch (err) {
+        console.error('Error al eliminar producto:', err.message);
         res.status(500).json({ error: 'Error al eliminar producto' });
     }
 });
 
-
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en el puerto ${PORT}`);
-});
-// Ruta para registrar una venta
+// Registrar venta
 app.post('/ventas', async (req, res) => {
     const { productoId, cantidad_vendida } = req.body;
-    console.log("Datos recibidos:", { productoId, cantidad_vendida }); // Depuración inicial
-
     try {
         // Verificar existencia y cantidad del producto
         const { data: producto, error: productError } = await supabase
@@ -91,16 +76,10 @@ app.post('/ventas', async (req, res) => {
             .select('cantidad')
             .eq('id', productoId)
             .single();
-
-        if (productError) {
-            console.error("Error al obtener producto:", productError);
-            throw productError;
+        if (productError || !producto) {
+            return res.status(404).json({ error: 'Producto no encontrado' });
         }
-        console.log("Producto encontrado:", producto); // Depuración de producto encontrado
-
-        // Verificar si hay suficiente inventario
-        if (!producto || producto.cantidad < cantidad_vendida) {
-            console.warn("Cantidad insuficiente en inventario");
+        if (producto.cantidad < cantidad_vendida) {
             return res.status(400).json({ error: 'Cantidad insuficiente en inventario' });
         }
 
@@ -110,28 +89,22 @@ app.post('/ventas', async (req, res) => {
             .from('productos')
             .update({ cantidad: nuevaCantidad })
             .eq('id', productoId);
-
-        if (updateError) {
-            console.error("Error al actualizar inventario:", updateError);
-            throw updateError;
-        }
-        console.log("Inventario actualizado, nueva cantidad:", nuevaCantidad); // Depuración de inventario
+        if (updateError) throw updateError;
 
         // Registrar la venta
         const { data: venta, error: ventaError } = await supabase
             .from('ventas')
             .insert([{ productoId, cantidad_vendida, fecha: new Date().toISOString() }]);
-
-        if (ventaError) {
-            console.error("Error al registrar venta:", ventaError);
-            throw ventaError;
-        }
-        console.log("Venta registrada exitosamente:", venta); // Depuración de venta registrada
+        if (ventaError) throw ventaError;
 
         res.status(201).json({ message: 'Venta registrada correctamente', venta });
     } catch (err) {
-        console.error('Error al registrar venta:', err);
-        res.status(500).json({ error: 'Error al registrar la venta', detalle: err.message });
+        console.error('Error al registrar venta:', err.message);
+        res.status(500).json({ error: 'Error al registrar venta' });
     }
 });
 
+// Iniciar servidor
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en el puerto ${PORT}`);
+});
