@@ -4,11 +4,14 @@ const { createClient } = require('@supabase/supabase-js');
 const cors = require('cors');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000; // Usa el puerto asignado por Render o 3000 para desarrollo local
 
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en el puerto ${PORT}`);
+});
 // Middleware
 app.use(cors({
-    origin: 'https://aceitera.onrender.com',
+    origin: 'https://aceitera.netlify.app',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));
