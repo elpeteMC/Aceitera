@@ -107,16 +107,38 @@ app.post('/ventas', async (req, res) => {
     }
 });
 // Obtener ventas
+// Obtener ventas con información del producto
 app.get('/ventas', async (req, res) => {
     try {
-        const { data, error } = await supabase.from('ventas').select('*');
+        const { data, error } = await supabase
+            .from('ventas')
+            .select(`
+                id,
+                cantidad_vendida,
+                fecha,
+                productoId (
+                    nombre,
+                    precio
+                )
+            `);
         if (error) throw error;
-        res.json(data);
+
+        // Procesar ventas para simplificar la estructura de respuesta
+        const ventas = data.map(venta => ({
+            id: venta.id,
+            cantidad: venta.cantidad_vendida,
+            fecha: venta.fecha,
+            productoNombre: venta.productoId.nombre,
+            precio: venta.productoId.precio
+        }));
+
+        res.json(ventas);
     } catch (err) {
         console.error('Error al obtener ventas:', err.message);
         res.status(500).json({ error: 'Error al obtener ventas' });
     }
 });
+
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
