@@ -8,18 +8,19 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
-    origin: 'https://aceitera.netlify.app',
-    methods: ['GET', 'POST', 'PUT', 'DELETE']
+    origin: 'https://aceitera.netlify.app', // Asegúrate de que este es el dominio correcto del frontend
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
 }));
-app.use(express.static('public'));
 app.use(bodyParser.json());
+app.use(express.static('public'));
 
 // Configuración de Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-    console.error('Faltan configuraciones de SUPABASE_URL o SUPABASE_KEY');
+    console.error('Faltan configuraciones de SUPABASE_URL o SUPABASE_KEY. Verifica tus variables de entorno.');
     process.exit(1);
 }
 
@@ -102,6 +103,9 @@ app.post('/ventas', async (req, res) => {
         console.error('Error al registrar venta:', err.message);
         res.status(500).json({ error: 'Error al registrar venta' });
     }
+});
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/public/index.html');
 });
 
 // Iniciar servidor
