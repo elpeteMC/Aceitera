@@ -39,6 +39,7 @@ app.get('/productos', async (req, res) => {
     }
 });
 
+
 // Agregar productos
 app.post('/productos', async (req, res) => {
     const { nombre, precio, cantidad, descripcion } = req.body;
