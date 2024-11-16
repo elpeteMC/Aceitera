@@ -70,6 +70,7 @@ app.delete('/productos/:id', async (req, res) => {
 
 // Registrar venta
 app.post('/ventas', async (req, res) => {
+    console.log('Datos recibidos en POST /ventas:', req.body);
     const { productoId, cantidad_vendida } = req.body;
     try {
         // Verificar existencia y cantidad del producto
@@ -105,6 +106,18 @@ app.post('/ventas', async (req, res) => {
         res.status(500).json({ error: 'Error al registrar venta' });
     }
 });
+// Obtener ventas
+app.get('/ventas', async (req, res) => {
+    try {
+        const { data, error } = await supabase.from('ventas').select('*');
+        if (error) throw error;
+        res.json(data);
+    } catch (err) {
+        console.error('Error al obtener ventas:', err.message);
+        res.status(500).json({ error: 'Error al obtener ventas' });
+    }
+});
+
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
 });
