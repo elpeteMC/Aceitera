@@ -6,12 +6,9 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000; // Usa el puerto asignado por Render o 3000 para desarrollo local
 
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en el puerto ${PORT}`);
-});
 // Middleware
 app.use(cors({
-    origin: 'https://aceitera.netlify.app',
+    origin: 'https://aceitera.netlify.app', // Cambia esto a tu dominio de producción
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));
@@ -63,7 +60,9 @@ app.post('/ventas', async (req, res) => {
         if (productoError || !producto) {
             return res.status(404).json({ error: 'Producto no encontrado' });
         }
- if (producto.cantidad < cantidad_vendida) {
+
+        // Verificar inventario
+        if (producto.cantidad < cantidad_vendida) {
             return res.status(400).json({ error: 'No hay suficiente inventario para completar la venta.' });
         }
 
@@ -87,8 +86,8 @@ app.post('/ventas', async (req, res) => {
         console.error('Error al registrar la venta:', err.message);
         res.status(500).json({ error: 'Error al registrar la venta.' });
     }
-    
 });
+
 // Obtener ventas
 app.get('/ventas', async (req, res) => {
     try {
@@ -106,6 +105,7 @@ app.get('/ventas', async (req, res) => {
 
         if (error) throw error;
 
+        // Mapeo de datos para la respuesta
         const ventas = data.map(venta => ({
             id: venta.id,
             cantidad_vendida: venta.cantidad_vendida,
@@ -119,4 +119,9 @@ app.get('/ventas', async (req, res) => {
         console.error('Error al obtener ventas:', err.message);
         res.status(500).json({ error: 'Error al obtener ventas.' });
     }
+});
+
+// Iniciar el servidor
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
