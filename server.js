@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
-    origin: 'https://aceitera.netlify.app',
+    origin: 'https://aceitera.onrender.com',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));
@@ -60,37 +60,32 @@ app.post('/ventas', async (req, res) => {
         if (productoError || !producto) {
             return res.status(404).json({ error: 'Producto no encontrado' });
         }
-        if (producto.cantidad < cantidad_vendida) {
-            return res.status(400).json({ error: 'Cantidad insuficiente en inventario.' });
-        }
-
-        // Actualizar inventario
-        const nuevaCantidad = producto.cantidad - cantidad_vendida;
-        const { error: updateError } = await supabase
-            .from('productos')
-            .update({ cantidad: nuevaCantidad })
-            .eq('id', productoId);
-
-        if (updateError) {
-            throw updateError;
+ if (producto.cantidad < cantidad_vendida) {
+            return res.status(400).json({ error: 'No hay suficiente inventario para completar la venta.' });
         }
 
         // Registrar la venta
         const { data: venta, error: ventaError } = await supabase
             .from('ventas')
-            .insert([{ productoId, cantidad_vendida, fecha: new Date().toISOString() }]);
+            .insert([{ productoId, cantidad_vendida }]);
 
-        if (ventaError) {
-            throw ventaError;
-        }
+        if (ventaError) throw ventaError;
 
-        res.status(201).json({ message: 'Venta registrada correctamente', venta });
+        // Actualizar el inventario del producto
+        const { error: updateError } = await supabase
+            .from('productos')
+            .update({ cantidad: producto.cantidad - cantidad_vendida })
+            .eq('id', productoId);
+
+        if (updateError) throw updateError;
+
+        res.status(201).json({ message: 'Venta registrada exitosamente', venta });
     } catch (err) {
-        console.error('Error al registrar venta:', err.message);
-        res.status(500).json({ error: 'Error al registrar venta.' });
+        console.error('Error al registrar la venta:', err.message);
+        res.status(500).json({ error: 'Error al registrar la venta.' });
     }
+    
 });
-
 // Obtener ventas
 app.get('/ventas', async (req, res) => {
     try {
@@ -100,7 +95,7 @@ app.get('/ventas', async (req, res) => {
                 id,
                 cantidad_vendida,
                 fecha,
-                productoId (
+                productoId:productos (
                     nombre,
                     precio
                 )
@@ -122,15 +117,3 @@ app.get('/ventas', async (req, res) => {
         res.status(500).json({ error: 'Error al obtener ventas.' });
     }
 });
-
-
-// Página de inicio
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/public/index.html');
-});
-
-// Iniciar servidor
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en el puerto ${PORT}`);
-});
-

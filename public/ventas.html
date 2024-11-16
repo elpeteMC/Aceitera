@@ -105,7 +105,7 @@
                 const response = await fetch('https://aceitera.onrender.com/ventas', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ productoId, cantidad }),
+                    body: JSON.stringify({ productoId, cantidad_vendida: cantidad }), // Cambiado body: JSON.stringify({ productoId, cantidad_vendida: cantidad }), // Cambiado 'cantidad' a 'cantidad_vendida'
                 });
     
                 if (!response.ok) {
@@ -137,8 +137,8 @@
                     row.innerHTML = `
                         <td>${index + 1}</td>
                         <td>${venta.productoNombre}</td>
-                        <td>${venta.cantidad}</td>
-                        <td>Q${(venta.cantidad * venta.precio).toFixed(2)}</td>
+                        <td>${venta.cantidad_vendida}</td>
+                        <td>Q${(venta.cantidad_vendida * venta.precio).toFixed(2)}</td>
                         <td>${new Date(venta.fecha).toLocaleString()}</td>
                     `;
                     ventasList.appendChild(row);
@@ -158,7 +158,6 @@
             setTimeout(() => alert.remove(), 5000);
         }
     </script>
-    
 </body>
 </html>
 
