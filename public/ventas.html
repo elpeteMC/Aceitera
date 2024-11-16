@@ -60,110 +60,105 @@
         document.addEventListener('DOMContentLoaded', () => {
             cargarProductos();
             cargarVentas();
-
+    
             const form = document.getElementById('venta-form');
             form.addEventListener('submit', async (event) => {
-                event.preventDefault(); // Evitar el envío por defecto
+                event.preventDefault();
                 event.stopPropagation();
-
+    
                 if (form.checkValidity()) {
                     await registrarVenta();
                 }
-
                 form.classList.add('was-validated');
             });
         });
-
-        // Cargar productos disponibles
+    
         async function cargarProductos() {
             try {
                 const response = await fetch('https://aceitera.onrender.com/productos');
-                if (!response.ok) throw new Error('Error al cargar los productos.');
-
+                if (!response.ok) throw new Error('Error al cargar productos');
+    
                 const productos = await response.json();
                 const productoSelect = document.getElementById('producto');
-                productos.forEach((producto) => {
+                productos.forEach(producto => {
                     const option = document.createElement('option');
-                    option.value = producto.id; // Asumiendo que el backend retorna un ID único
+                    option.value = producto.id;
                     option.textContent = `${producto.nombre} (Q${producto.precio})`;
                     productoSelect.appendChild(option);
                 });
             } catch (error) {
-                console.error('Error al cargar productos:', error);
-                alert('No se pudieron cargar los productos. Intenta más tarde.');
+                console.error('Error:', error);
+                mostrarError('Error al cargar productos.');
             }
         }
-
-        // Registrar nueva venta
+    
         async function registrarVenta() {
-    const productoId = document.getElementById('producto').value;
-    const cantidad = parseInt(document.getElementById('cantidad').value, 10);
-
-    if (!productoId || isNaN(cantidad) || cantidad <= 0) {
-        mostrarError('Por favor, selecciona un producto y una cantidad válida.');
-        return;
-    }
-
-    try {
-        const response = await fetch('https://aceitera.onrender.com/ventas', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ productoId, cantidad }),
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Error desconocido');
+            const productoId = document.getElementById('producto').value;
+            const cantidad = parseInt(document.getElementById('cantidad').value, 10);
+    
+            if (!productoId || isNaN(cantidad) || cantidad <= 0) {
+                mostrarError('Selecciona un producto y cantidad válidos.');
+                return;
+            }
+    
+            try {
+                const response = await fetch('https://aceitera.onrender.com/ventas', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productoId, cantidad }),
+                });
+    
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Error desconocido.');
+                }
+    
+                alert('Venta registrada correctamente.');
+                cargarVentas();
+                document.getElementById('venta-form').reset();
+                document.getElementById('venta-form').classList.remove('was-validated');
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarError(error.message);
+            }
         }
-
-        alert('Venta registrada con éxito.');
-        cargarVentas();
-        document.getElementById('venta-form').reset();
-        document.getElementById('venta-form').classList.remove('was-validated');
-    } catch (error) {
-        console.error('Error al registrar venta:', error);
-        mostrarError(error.message);
-    }
-}
-
-
-        // Cargar ventas registradas
+    
         async function cargarVentas() {
-    try {
-        const response = await fetch('https://aceitera.onrender.com/ventas');
-        if (!response.ok) throw new Error('Error al cargar las ventas.');
-
-        const ventas = await response.json();
-        const ventasList = document.getElementById('ventas-list');
-        ventasList.innerHTML = ''; // Limpiar tabla
-
-        ventas.forEach((venta, index) => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${venta.productoNombre}</td>
-                <td>${venta.cantidad}</td>
-                <td>Q${(venta.cantidad * venta.precio).toFixed(2)}</td>
-                <td>${new Date(venta.fecha).toLocaleString()}</td>
-            `;
-            ventasList.appendChild(row);
-        });
-    } catch (error) {
-        console.error('Error al cargar ventas:', error);
-        mostrarError('No se pudieron cargar las ventas.');
-    }
-}
-function mostrarError(mensaje) {
-    const container = document.querySelector('.container');
-    const alert = document.createElement('div');
-    alert.className = 'alert alert-danger';
-    alert.textContent = mensaje;
-    container.prepend(alert);
-    setTimeout(() => alert.remove(), 5000); // Eliminar después de 5 segundos
-}
-
-
+            try {
+                const response = await fetch('https://aceitera.onrender.com/ventas');
+                if (!response.ok) throw new Error('Error al cargar ventas.');
+    
+                const ventas = await response.json();
+                const ventasList = document.getElementById('ventas-list');
+                ventasList.innerHTML = '';
+    
+                ventas.forEach((venta, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${venta.productoNombre}</td>
+                        <td>${venta.cantidad}</td>
+                        <td>Q${(venta.cantidad * venta.precio).toFixed(2)}</td>
+                        <td>${new Date(venta.fecha).toLocaleString()}</td>
+                    `;
+                    ventasList.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarError('Error al cargar ventas.');
+            }
+        }
+    
+        function mostrarError(mensaje) {
+            const container = document.querySelector('.container');
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger';
+            alert.textContent = mensaje;
+            container.prepend(alert);
+            setTimeout(() => alert.remove(), 5000);
+        }
     </script>
+    
 </body>
 </html>
 
