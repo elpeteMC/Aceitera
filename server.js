@@ -75,13 +75,15 @@ app.post('/productos', async (req, res) => {
  */
 app.delete('/productos/:id', async (req, res) => {
     const { id } = req.params;
+    console.log('ID recibido para eliminar:', id);
 
     try {
-        // Validar que no existan ventas asociadas al producto
+        // Validar que no existan ventas asociadas
         const { data: ventasAsociadas, error: ventasError } = await supabase
             .from('ventas')
             .select('id')
             .eq('productoid', id);
+        console.log('Ventas asociadas:', ventasAsociadas);
 
         if (ventasError) throw ventasError;
         if (ventasAsociadas.length > 0) {
@@ -92,6 +94,7 @@ app.delete('/productos/:id', async (req, res) => {
         const { error } = await supabase.from('productos').delete().eq('id', id);
         if (error) throw error;
 
+        console.log('Producto eliminado con éxito');
         res.status(200).json({ message: 'Producto eliminado' });
     } catch (err) {
         console.error('Error al eliminar producto:', err.message);
