@@ -93,35 +93,36 @@
         }
     
         async function registrarVenta() {
-            const productoId = document.getElementById('producto').value;
-            const cantidad = parseInt(document.getElementById('cantidad').value, 10);
-    
-            if (!productoId || isNaN(cantidad) || cantidad <= 0) {
-                mostrarError('Selecciona un producto y cantidad válidos.');
-                return;
-            }
-    
-            try {
-                const response = await fetch('https://aceitera.onrender.com/ventas', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ productoId, cantidad_vendida: cantidad }), // Cambiado body: JSON.stringify({ productoId, cantidad_vendida: cantidad }), // Cambiado 'cantidad' a 'cantidad_vendida'
-                });
-    
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Error desconocido.');
-                }
-    
-                alert('Venta registrada correctamente.');
-                cargarVentas();
-                document.getElementById('venta-form').reset();
-                document.getElementById('venta-form').classList.remove('was-validated');
-            } catch (error) {
-                console.error('Error:', error);
-                mostrarError(error.message);
-            }
+    const productoid = document.getElementById('producto').value; // Cambiado productoId a productoid
+    const cantidad = parseInt(document.getElementById('cantidad').value, 10);
+
+    if (!productoid || isNaN(cantidad) || cantidad <= 0) {
+        mostrarError('Selecciona un producto y cantidad válidos.');
+        return;
+    }
+
+    try {
+        const response = await fetch('https://aceitera.onrender.com/ventas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productoid, cantidad_vendida: cantidad }), // Enviando productoid
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Error desconocido.');
         }
+
+        alert('Venta registrada correctamente.');
+        cargarVentas();
+        document.getElementById('venta-form').reset();
+        document.getElementById('venta-form').classList.remove('was-validated');
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarError(error.message);
+    }
+}
+
     
         async function cargarVentas() {
     try {
