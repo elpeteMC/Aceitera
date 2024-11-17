@@ -73,7 +73,7 @@ app.post('/productos', async (req, res) => {
 /**
  * Eliminar producto
  */
-aapp.delete('/productos/:id', async (req, res) => {
+app.delete('/productos/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
@@ -113,7 +113,6 @@ aapp.delete('/productos/:id', async (req, res) => {
         res.status(500).json({ error: 'Error al eliminar producto y sus ventas asociadas.' });
     }
 });
-
 
 /**
  * Registrar venta
