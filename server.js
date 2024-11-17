@@ -73,34 +73,47 @@ app.post('/productos', async (req, res) => {
 /**
  * Eliminar producto
  */
-app.delete('/productos/:id', async (req, res) => {
+aapp.delete('/productos/:id', async (req, res) => {
     const { id } = req.params;
-    console.log('ID recibido para eliminar:', id);
 
     try {
-        // Validar que no existan ventas asociadas
+        // Validar ventas asociadas
         const { data: ventasAsociadas, error: ventasError } = await supabase
             .from('ventas')
             .select('id')
             .eq('productoid', id);
-        console.log('Ventas asociadas:', ventasAsociadas);
 
         if (ventasError) throw ventasError;
+
         if (ventasAsociadas.length > 0) {
-            return res.status(400).json({ error: 'No se puede eliminar un producto con ventas asociadas.' });
+            console.log(`Eliminando ${ventasAsociadas.length} ventas asociadas al producto con ID ${id}.`);
+
+            // Eliminar ventas asociadas al producto
+            const { error: ventasDeleteError } = await supabase
+                .from('ventas')
+                .delete()
+                .eq('productoid', id);
+
+            if (ventasDeleteError) throw ventasDeleteError;
+            console.log('Ventas asociadas eliminadas con éxito.');
         }
 
-        // Eliminar producto
-        const { error } = await supabase.from('productos').delete().eq('id', id);
-        if (error) throw error;
+        // Eliminar el producto
+        const { error: productoDeleteError } = await supabase
+            .from('productos')
+            .delete()
+            .eq('id', id);
 
-        console.log('Producto eliminado con éxito');
-        res.status(200).json({ message: 'Producto eliminado' });
+        if (productoDeleteError) throw productoDeleteError;
+
+        console.log(`Producto con ID ${id} eliminado con éxito.`);
+        res.status(200).json({ message: 'Producto y ventas asociadas eliminados con éxito.' });
     } catch (err) {
-        console.error('Error al eliminar producto:', err.message);
-        res.status(500).json({ error: 'Error al eliminar producto' });
+        console.error('Error al eliminar producto o ventas asociadas:', err.message);
+        res.status(500).json({ error: 'Error al eliminar producto y sus ventas asociadas.' });
     }
 });
+
 
 /**
  * Registrar venta
