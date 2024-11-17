@@ -124,30 +124,46 @@
         }
     
         async function cargarVentas() {
-            try {
-                const response = await fetch('https://aceitera.onrender.com/ventas');
-                if (!response.ok) throw new Error('Error al cargar ventas.');
-    
-                const ventas = await response.json();
-                const ventasList = document.getElementById('ventas-list');
-                ventasList.innerHTML = '';
-    
-                ventas.forEach((venta, index) => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td>${venta.productoNombre}</td>
-                        <td>${venta.cantidad_vendida}</td>
-                        <td>Q${(venta.cantidad_vendida * venta.precio).toFixed(2)}</td>
-                        <td>${new Date(venta.fecha).toLocaleString()}</td>
-                    `;
-                    ventasList.appendChild(row);
-                });
-            } catch (error) {
-                console.error('Error:', error);
-                mostrarError('Error al cargar ventas.');
+    try {
+        const response = await fetch('https://aceitera.onrender.com/ventas');
+        if (!response.ok) throw new Error('Error al cargar ventas.');
+
+        const ventas = await response.json();
+        const ventasList = document.getElementById('ventas-list');
+        ventasList.innerHTML = '';
+
+        ventas.forEach((venta, index) => {
+            const producto = venta.producto; // Extraer el objeto producto
+            const row = document.createElement('tr');
+            
+            // Si el producto está presente, mostrar sus datos
+            if (producto) {
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${producto.nombre}</td>
+                    <td>${venta.cantidad_vendida}</td>
+                    <td>Q${(venta.cantidad_vendida * producto.precio).toFixed(2)}</td>
+                    <td>${new Date(venta.fecha).toLocaleString()}</td>
+                `;
+            } else {
+                // Si el producto no está presente, mostrar un mensaje genérico
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>Producto no disponible</td>
+                    <td>${venta.cantidad_vendida}</td>
+                    <td>-</td>
+                    <td>${new Date(venta.fecha).toLocaleString()}</td>
+                `;
             }
-        }
+
+            ventasList.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarError('Error al cargar ventas.');
+    }
+}
+
     
         function mostrarError(mensaje) {
             const container = document.querySelector('.container');

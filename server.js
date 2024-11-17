@@ -153,29 +153,40 @@ app.post('/ventas', async (req, res) => {
  */
 app.get('/ventas', async (req, res) => {
     try {
-        const { data, error } = await supabase
+        // Obtener las ventas
+        const { data: ventas, error: ventasError } = await supabase
             .from('ventas')
-            .select('id, cantidad_vendida, fecha, productos (nombre, precio)');
+            .select('id, cantidad_vendida, fecha, productoid');
 
-        if (error) throw error;
+        if (ventasError) throw ventasError;
 
-        // Formatear la respuesta
-        const ventas = data.map(venta => ({
-            id: venta.id,
-            cantidad_vendida: venta.cantidad_vendida,
-            fecha: venta.fecha,
-            producto: {
-                nombre: venta.productos.nombre,
-                precio: venta.productos.precio,
-            },
-        }));
+        // Obtener todos los productos para cruzar los datos manualmente
+        const { data: productos, error: productosError } = await supabase
+            .from('productos')
+            .select('id, nombre, precio');
 
-        res.json(ventas);
+        if (productosError) throw productosError;
+
+        // Unir manualmente las ventas con los datos de productos
+        const ventasConProductos = ventas.map((venta) => {
+            const producto = productos.find((prod) => prod.id === venta.productoid);
+            return {
+                id: venta.id,
+                cantidad_vendida: venta.cantidad_vendida,
+                fecha: venta.fecha,
+                producto: producto
+                    ? { nombre: producto.nombre, precio: producto.precio }
+                    : null, // En caso de que el producto no exista
+            };
+        });
+
+        res.json(ventasConProductos);
     } catch (err) {
         console.error('Error al obtener ventas:', err.message);
         res.status(500).json({ error: 'Error al obtener ventas' });
     }
 });
+
 
 // Página de inicio
 app.get('/', (req, res) => {
