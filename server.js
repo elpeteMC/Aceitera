@@ -46,6 +46,7 @@ app.get('/productos', async (req, res) => {
  * Agregar productos
  */
 app.post('/productos', async (req, res) => {
+    console.log('Datos recibidos:', req.body);
     const { nombre, precio, cantidad, descripcion } = req.body;
 
     // Validaciones estrictas
@@ -54,16 +55,20 @@ app.post('/productos', async (req, res) => {
     }
 
     try {
-        const { data, error } = await supabase
-            .from('productos')
-            .insert([{ nombre, precio, cantidad, descripcion }]);
+        // Crear objeto con campos dinámicos
+        const nuevoProducto = { nombre, precio, cantidad };
+        if (descripcion) nuevoProducto.descripcion = descripcion; // Agregar descripción solo si existe
+
+        const { data, error } = await supabase.from('productos').insert([nuevoProducto]);
         if (error) throw error;
+
         res.status(201).json({ message: 'Producto agregado', producto: data });
     } catch (err) {
         console.error('Error al agregar producto:', err.message);
         res.status(500).json({ error: 'Error al agregar producto' });
     }
 });
+
 
 /**
  * Eliminar producto
