@@ -67,7 +67,7 @@
                 productos.forEach((producto) => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${producto.id || 'N/A'}</td>
+                        <td>${producto.id !== undefined ? producto.id : 'N/A'}</td>
                         <td>${producto.nombre || 'N/A'}</td>
                         <td>${producto.cantidad_existencia || 0}</td>
                         <td>${producto.codigo_barras || 'N/A'}</td>

@@ -47,7 +47,7 @@ app.get('/productos', async (req, res) => {
  */
 app.post('/productos', async (req, res) => {
     const { 
-        nombre, precio_costo, precio_publico, cantidad_existencia, codigo_barras, codigo_producto, marca, numero_factura, proveedor 
+        nombre, precio_costo, precio_publico, cantidad_existencia, codigo_barras, codigo_producto, marca, numero_factura, proveedor, ganancia 
     } = req.body;
 
     // Validaciones
@@ -60,12 +60,12 @@ app.post('/productos', async (req, res) => {
         const ganancia = precio_publico - precio_costo;
 
         const { data, error } = await supabase
-            .from('productos')
-            .insert([{ 
-                nombre, precio_costo, precio_publico, cantidad_existencia, codigo_barras, codigo_producto, marca, numero_factura, proveedor, ganancia 
-            }]);
-
-        if (error) throw error;
+    .from('productos')
+    .insert([{ 
+        nombre, precio_costo, precio_publico, cantidad_existencia, codigo_barras, codigo_producto, marca, numero_factura, proveedor, ganancia 
+    }])
+    .select(); // Asegura que devuelva la fila insertada
+    if (error) throw error;
 
         res.status(201).json({ message: 'Producto agregado', producto: data });
     } catch (err) {
@@ -151,7 +151,7 @@ app.delete('/productos/:id', async (req, res) => {
 });
 
 /**
- * Obtener ventas
+ * Registrar una nueva venta
  */
 app.post('/ventas', async (req, res) => {
     const { productoid, cantidad_vendida } = req.body;
@@ -172,7 +172,7 @@ app.post('/ventas', async (req, res) => {
             return res.status(404).json({ error: 'El producto no existe.' });
         }
 
-        // Validar que haya suficiente inventario
+        // Validar inventario
         if (producto.cantidad_existencia < cantidad_vendida) {
             return res.status(400).json({ error: 'Cantidad insuficiente en inventario.' });
         }
@@ -184,16 +184,14 @@ app.post('/ventas', async (req, res) => {
             .update({ cantidad_existencia: nuevaCantidad })
             .eq('id', productoid);
 
-        if (updateError) {
-            throw updateError;
-        }
+        if (updateError) throw updateError;
 
-        // Calcular total de la venta y ganancia
+        // Calcular totales
         const totalVenta = producto.precio_publico * cantidad_vendida;
         const totalGanancia = producto.ganancia * cantidad_vendida;
 
-        // Registrar la venta
-        const { data: venta, error: ventaError } = await supabase
+        // Registrar venta
+        const { error: ventaError } = await supabase
             .from('ventas')
             .insert([{
                 productoid,
@@ -203,42 +201,43 @@ app.post('/ventas', async (req, res) => {
                 ganancia: totalGanancia,
             }]);
 
-        if (ventaError) {
-            throw ventaError;
-        }
+        if (ventaError) throw ventaError;
 
-        res.status(201).json({ message: 'Venta registrada correctamente', venta });
+        res.status(201).json({ message: 'Venta registrada correctamente.' });
     } catch (err) {
         console.error('Error al registrar la venta:', err.message);
         res.status(500).json({ error: 'Error al registrar la venta.' });
     }
 });
+/**
+ * Obtener ventas con nombres de productos
+ */
 app.get('/ventas', async (req, res) => {
     try {
-        // Obtener las ventas con los datos necesarios
+        // Obtener las ventas
         const { data: ventas, error: ventasError } = await supabase
             .from('ventas')
             .select('id, cantidad_vendida, fecha, total, ganancia, productoid');
 
         if (ventasError) throw ventasError;
 
-        // Cruce con productos solo si es necesario
+        // Obtener nombres de productos
         const { data: productos, error: productosError } = await supabase
             .from('productos')
             .select('id, nombre');
 
         if (productosError) throw productosError;
 
-        // Enlazar ventas con nombres de productos
+        // Relacionar ventas con productos
         const ventasConProductos = ventas.map((venta) => {
             const producto = productos.find((prod) => prod.id === venta.productoid);
             return {
                 id: venta.id,
+                producto: producto ? producto.nombre : 'Producto no disponible',
                 cantidad_vendida: venta.cantidad_vendida,
-                fecha: venta.fecha,
                 total: venta.total,
                 ganancia: venta.ganancia,
-                producto: producto ? producto.nombre : 'Producto no disponible',
+                fecha: venta.fecha,
             };
         });
 
@@ -248,6 +247,7 @@ app.get('/ventas', async (req, res) => {
         res.status(500).json({ error: 'Error al obtener ventas.' });
     }
 });
+
 
 // Página de inicio
 app.get('/', (req, res) => {

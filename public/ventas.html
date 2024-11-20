@@ -130,35 +130,38 @@
 
         // Cargar las ventas registradas
         async function cargarVentas() {
-            const ventasList = document.getElementById('ventas-list');
-            const ventasTable = document.getElementById('ventas-table');
-            const loadingMessage = document.getElementById('loading-message');
+    const ventasList = document.getElementById('ventas-list');
+    const ventasTable = document.getElementById('ventas-table');
+    const loadingMessage = document.getElementById('loading-message');
 
-            ventasList.innerHTML = '';
-            ventasTable.classList.add('d-none');
-            loadingMessage.classList.remove('d-none');
+    ventasList.innerHTML = '';
+    ventasTable.classList.add('d-none');
+    loadingMessage.classList.remove('d-none');
 
-            try {
-                const response = await fetch('https://aceitera.onrender.com/ventas');
-                if (!response.ok) throw new Error('Error al cargar ventas.');
+    try {
+        const response = await fetch('https://aceitera.onrender.com/ventas');
+        if (!response.ok) throw new Error('Error al cargar ventas.');
 
-                const ventas = await response.json();
-                ventasTable.classList.remove('d-none');
-                loadingMessage.classList.add('d-none');
+        const ventas = await response.json();
+        ventasTable.classList.remove('d-none');
+        loadingMessage.classList.add('d-none');
 
-                ventas.forEach((venta, index) => {
-                    const producto = venta.producto;
-                    const row = document.createElement('tr');
-                    row.innerHTML = producto
-                        ? `<td>${index + 1}</td><td>${producto.nombre}</td><td>${venta.cantidad_vendida}</td><td>Q${(venta.cantidad_vendida * producto.precio).toFixed(2)}</td><td>${new Date(venta.fecha).toLocaleString()}</td>`
-                        : `<td>${index + 1}</td><td>Producto no disponible</td><td>${venta.cantidad_vendida}</td><td>-</td><td>${new Date(venta.fecha).toLocaleString()}</td>`;
-                    ventasList.appendChild(row);
-                });
-            } catch (error) {
-                console.error('Error al cargar ventas:', error);
-                mostrarError('No se pudieron cargar las ventas. Intenta más tarde.');
-            }
-        }
+        ventas.forEach((venta, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${venta.producto}</td>
+                <td>${venta.cantidad_vendida}</td>
+                <td>Q${venta.total.toFixed(2)}</td>
+                <td>${new Date(venta.fecha).toLocaleString()}</td>
+            `;
+            ventasList.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Error al cargar ventas:', error);
+        mostrarError('No se pudieron cargar las ventas. Intenta más tarde.');
+    }
+}
 
         // Mostrar mensajes de error
         function mostrarError(mensaje) {
