@@ -17,23 +17,45 @@
                 <div class="mb-3">
                     <label for="nombre" class="form-label">Nombre del Producto</label>
                     <input type="text" id="nombre" class="form-control" required>
-                    <div class="invalid-feedback">Por favor, ingresa el nombre del producto.</div>
                 </div>
                 <div class="mb-3">
-                    <label for="precio" class="form-label">Precio (Q)</label>
-                    <input type="number" id="precio" class="form-control" step="0.01" min="0.01" required>
-                    <div class="invalid-feedback">Por favor, ingresa un precio válido.</div>
+                    <label for="cantidad_existencia" class="form-label">Cantidad en Existencia</label>
+                    <input type="number" id="cantidad_existencia" class="form-control" required>
                 </div>
                 <div class="mb-3">
-                    <label for="cantidad" class="form-label">Cantidad</label>
-                    <input type="number" id="cantidad" class="form-control" min="1" required>
-                    <div class="invalid-feedback">Por favor, ingresa una cantidad válida.</div>
+                    <label for="codigo_barras" class="form-label">Código de Barras</label>
+                    <input type="text" id="codigo_barras" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="codigo_producto" class="form-label">Código de Producto</label>
+                    <input type="text" id="codigo_producto" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="marca" class="form-label">Marca</label>
+                    <input type="text" id="marca" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label for="numero_factura" class="form-label">Número de Factura</label>
+                    <input type="text" id="numero_factura" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label for="proveedor" class="form-label">Proveedor</label>
+                    <input type="text" id="proveedor" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label for="precio_costo" class="form-label">Precio Costo</label>
+                    <input type="number" id="precio_costo" class="form-control" step="0.01" required>
+                </div>
+                <div class="mb-3">
+                    <label for="precio_publico" class="form-label">Precio Público</label>
+                    <input type="number" id="precio_publico" class="form-control" step="0.01" required>
                 </div>
                 <div class="d-flex justify-content-between">
                     <a href="index.html" class="btn btn-secondary">Cancelar</a>
                     <button type="submit" class="btn btn-primary">Guardar Producto</button>
                 </div>
             </form>
+            
         </div>
     </main>
     <footer class="mt-auto bg-light text-center py-3">
@@ -59,34 +81,40 @@
 
         // Función para agregar un nuevo producto
         async function agregarProducto() {
-            const nombre = document.getElementById('nombre').value.trim();
-            const precio = parseFloat(document.getElementById('precio').value);
-            const cantidad = parseInt(document.getElementById('cantidad').value, 10);
+    const producto = {
+        nombre: document.getElementById('nombre').value.trim(),
+        cantidad_existencia: parseInt(document.getElementById('cantidad_existencia').value, 10),
+        codigo_barras: document.getElementById('codigo_barras').value.trim(),
+        codigo_producto: document.getElementById('codigo_producto').value.trim(),
+        marca: document.getElementById('marca').value.trim(),
+        numero_factura: document.getElementById('numero_factura').value.trim(),
+        proveedor: document.getElementById('proveedor').value.trim(),
+        precio_costo: parseFloat(document.getElementById('precio_costo').value),
+        precio_publico: parseFloat(document.getElementById('precio_publico').value),
+    };
 
-            // Validación adicional (opcional)
-            if (!nombre || precio <= 0 || cantidad <= 0) {
-                alert('Por favor, completa todos los campos correctamente.');
-                return;
-            }
+    if (!producto.nombre || producto.precio_costo <= 0 || producto.precio_publico <= 0) {
+        alert('Por favor, completa todos los campos correctamente.');
+        return;
+    }
 
-            try {
-                const response = await fetch('https://aceitera.onrender.com/productos', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ nombre, precio, cantidad }),
-                });
+    try {
+        const response = await fetch('https://api.aceitera.com/productos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(producto),
+        });
 
-                if (!response.ok) throw new Error('Error al agregar el producto.');
+        if (!response.ok) throw new Error('Error al agregar el producto.');
 
-                alert('Producto agregado con éxito.');
-                window.location.href = 'index.html'; // Redirigir al listado de productos
-            } catch (error) {
-                console.error('Error al agregar producto:', error);
-                alert('No se pudo agregar el producto. Intenta de nuevo más tarde.');
-            }
-        }
+        alert('Producto agregado con éxito.');
+        window.location.href = 'index.html';
+    } catch (error) {
+        console.error('Error al agregar producto:', error);
+        alert('No se pudo agregar el producto. Intenta de nuevo más tarde.');
+    }
+}
+
     </script>
 </body>
 </html>

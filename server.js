@@ -46,28 +46,50 @@ app.get('/productos', async (req, res) => {
  * Agregar productos
  */
 app.post('/productos', async (req, res) => {
-    console.log('Datos recibidos:', req.body);
-    const { nombre, precio, cantidad, descripcion } = req.body;
+    const { 
+        nombre, precio_costo, precio_publico, cantidad_existencia, codigo_barras, codigo_producto, marca, numero_factura, proveedor 
+    } = req.body;
 
-    // Validaciones estrictas
-    if (!nombre || precio <= 0 || cantidad < 0) {
-        return res.status(400).json({ error: 'Datos inválidos. Verifica el nombre, precio y cantidad.' });
+    // Validaciones
+    if (!nombre || precio_costo <= 0 || precio_publico <= 0 || cantidad_existencia < 0) {
+        return res.status(400).json({ error: 'Datos inválidos. Verifica los campos ingresados.' });
     }
 
     try {
-        // Crear objeto con campos dinámicos
-        const nuevoProducto = { nombre, precio, cantidad };
-        if (descripcion) nuevoProducto.descripcion = descripcion; // Agregar descripción solo si existe
+        // Calcular la ganancia
+        const ganancia = precio_publico - precio_costo;
 
-        const { data, error } = await supabase.from('productos').insert([nuevoProducto]);
+        const { data, error } = await supabase
+            .from('productos')
+            .insert([{ 
+                nombre, precio_costo, precio_publico, cantidad_existencia, codigo_barras, codigo_producto, marca, numero_factura, proveedor, ganancia 
+            }]);
+
         if (error) throw error;
 
         res.status(201).json({ message: 'Producto agregado', producto: data });
     } catch (err) {
         console.error('Error al agregar producto:', err.message);
-        res.status(500).json({ error: 'Error al agregar producto' });
+        res.status(500).json({ error: 'Error al agregar producto.' });
     }
 });
+
+// Obtener productos
+app.get('/productos', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('productos')
+            .select('*');
+
+        if (error) throw error;
+
+        res.status(200).json(data);
+    } catch (err) {
+        console.error('Error al obtener productos:', err.message);
+        res.status(500).json({ error: 'Error al obtener productos.' });
+    }
+});
+
 
 
 /**
