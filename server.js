@@ -93,51 +93,65 @@ app.get('/productos', async (req, res) => {
 
 
 /**
- * Eliminar producto
+ * Eliminar producto y sus ventas asociadas
  */
 app.delete('/productos/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
+        console.log(`Iniciando eliminación del producto con ID: ${id}`);
+
         // Validar ventas asociadas
         const { data: ventasAsociadas, error: ventasError } = await supabase
             .from('ventas')
             .select('id')
-            .eq('productoid', id);
+            .eq('productoid', id); // Ajustar 'productoid' si el campo tiene otro nombre
 
-        if (ventasError) throw ventasError;
+        if (ventasError) {
+            console.error('Error al verificar ventas asociadas:', ventasError.message);
+            throw ventasError;
+        }
 
         if (ventasAsociadas.length > 0) {
-            console.log(`Eliminando ${ventasAsociadas.length} ventas asociadas al producto con ID ${id}.`);
+            console.log(`Se encontraron ${ventasAsociadas.length} ventas asociadas al producto con ID ${id}. Eliminándolas...`);
 
             // Eliminar ventas asociadas al producto
             const { error: ventasDeleteError } = await supabase
                 .from('ventas')
                 .delete()
-                .eq('productoid', id);
+                .eq('productoid', id); // Ajustar 'productoid' si es necesario
 
-            if (ventasDeleteError) throw ventasDeleteError;
+            if (ventasDeleteError) {
+                console.error('Error al eliminar ventas asociadas:', ventasDeleteError.message);
+                throw ventasDeleteError;
+            }
             console.log('Ventas asociadas eliminadas con éxito.');
         }
 
         // Eliminar el producto
+        console.log(`Eliminando producto con ID: ${id}`);
         const { error: productoDeleteError } = await supabase
             .from('productos')
             .delete()
             .eq('id', id);
 
-        if (productoDeleteError) throw productoDeleteError;
+        if (productoDeleteError) {
+            console.error('Error al eliminar el producto:', productoDeleteError.message);
+            throw productoDeleteError;
+        }
 
         console.log(`Producto con ID ${id} eliminado con éxito.`);
         res.status(200).json({ message: 'Producto y ventas asociadas eliminados con éxito.' });
     } catch (err) {
         console.error('Error al eliminar producto o ventas asociadas:', err.message);
-        res.status(500).json({ error: 'Error al eliminar producto y sus ventas asociadas.' });
+        res.status(500).json({
+            error: 'No se pudo eliminar el producto o sus ventas asociadas. Verifique los registros.'
+        });
     }
 });
 
 /**
- * Registrar venta
+ * Obtener ventas
  */
 app.post('/ventas', async (req, res) => {
     const { productoid, cantidad_vendida } = req.body;
@@ -150,7 +164,7 @@ app.post('/ventas', async (req, res) => {
         // Verificar si el producto existe
         const { data: producto, error: productError } = await supabase
             .from('productos')
-            .select('id, cantidad')
+            .select('id, cantidad_existencia, precio_publico, ganancia')
             .eq('id', productoid)
             .single();
 
@@ -159,25 +173,35 @@ app.post('/ventas', async (req, res) => {
         }
 
         // Validar que haya suficiente inventario
-        if (producto.cantidad < cantidad_vendida) {
+        if (producto.cantidad_existencia < cantidad_vendida) {
             return res.status(400).json({ error: 'Cantidad insuficiente en inventario.' });
         }
 
         // Actualizar inventario
-        const nuevaCantidad = producto.cantidad - cantidad_vendida;
+        const nuevaCantidad = producto.cantidad_existencia - cantidad_vendida;
         const { error: updateError } = await supabase
             .from('productos')
-            .update({ cantidad: nuevaCantidad })
+            .update({ cantidad_existencia: nuevaCantidad })
             .eq('id', productoid);
 
         if (updateError) {
             throw updateError;
         }
 
+        // Calcular total de la venta y ganancia
+        const totalVenta = producto.precio_publico * cantidad_vendida;
+        const totalGanancia = producto.ganancia * cantidad_vendida;
+
         // Registrar la venta
         const { data: venta, error: ventaError } = await supabase
             .from('ventas')
-            .insert([{ productoid, cantidad_vendida, fecha: new Date().toISOString() }]);
+            .insert([{
+                productoid,
+                cantidad_vendida,
+                fecha: new Date().toISOString(),
+                total: totalVenta,
+                ganancia: totalGanancia,
+            }]);
 
         if (ventaError) {
             throw ventaError;
@@ -189,46 +213,41 @@ app.post('/ventas', async (req, res) => {
         res.status(500).json({ error: 'Error al registrar la venta.' });
     }
 });
-
-/**
- * Obtener ventas
- */
 app.get('/ventas', async (req, res) => {
     try {
-        // Obtener las ventas
+        // Obtener las ventas con los datos necesarios
         const { data: ventas, error: ventasError } = await supabase
             .from('ventas')
-            .select('id, cantidad_vendida, fecha, productoid');
+            .select('id, cantidad_vendida, fecha, total, ganancia, productoid');
 
         if (ventasError) throw ventasError;
 
-        // Obtener todos los productos para cruzar los datos manualmente
+        // Cruce con productos solo si es necesario
         const { data: productos, error: productosError } = await supabase
             .from('productos')
-            .select('id, nombre, precio');
+            .select('id, nombre');
 
         if (productosError) throw productosError;
 
-        // Unir manualmente las ventas con los datos de productos
+        // Enlazar ventas con nombres de productos
         const ventasConProductos = ventas.map((venta) => {
             const producto = productos.find((prod) => prod.id === venta.productoid);
             return {
                 id: venta.id,
                 cantidad_vendida: venta.cantidad_vendida,
                 fecha: venta.fecha,
-                producto: producto
-                    ? { nombre: producto.nombre, precio: producto.precio }
-                    : null, // En caso de que el producto no exista
+                total: venta.total,
+                ganancia: venta.ganancia,
+                producto: producto ? producto.nombre : 'Producto no disponible',
             };
         });
 
         res.json(ventasConProductos);
     } catch (err) {
         console.error('Error al obtener ventas:', err.message);
-        res.status(500).json({ error: 'Error al obtener ventas' });
+        res.status(500).json({ error: 'Error al obtener ventas.' });
     }
 });
-
 
 // Página de inicio
 app.get('/', (req, res) => {
