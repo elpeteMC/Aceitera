@@ -1,4 +1,3 @@
-<!-- inventario.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -15,8 +14,15 @@
                 <tr>
                     <th>ID</th>
                     <th>Nombre</th>
-                    <th>Precio (Q)</th>
                     <th>Cantidad</th>
+                    <th>Código de Barras</th>
+                    <th>Código de Producto</th>
+                    <th>Marca</th>
+                    <th>Número de Factura</th>
+                    <th>Proveedor</th>
+                    <th>Precio Costo (Q)</th>
+                    <th>Precio Público (Q)</th>
+                    <th>Ganancia (Q)</th>
                 </tr>
             </thead>
             <tbody id="inventarioTable">
@@ -28,20 +34,30 @@
     <script>
         async function cargarInventario() {
             try {
+                // Solicitar los datos del inventario desde el backend
                 const response = await fetch('https://aceitera.onrender.com/productos');
                 if (!response.ok) throw new Error('Error al cargar el inventario.');
 
+                // Parsear los datos de la respuesta
                 const productos = await response.json();
                 const tableBody = document.getElementById('inventarioTable');
-                tableBody.innerHTML = ''; // Limpiar tabla antes de agregar datos
+                tableBody.innerHTML = ''; // Limpiar la tabla antes de agregar los datos
 
+                // Agregar cada producto como una fila en la tabla
                 productos.forEach(producto => {
                     const row = `
                         <tr>
                             <td>${producto.id}</td>
                             <td>${producto.nombre}</td>
-                            <td>Q${producto.precio.toFixed(2)}</td>
-                            <td>${producto.cantidad}</td>
+                            <td>${producto.cantidad_existencia}</td>
+                            <td>${producto.codigo_barras}</td>
+                            <td>${producto.codigo_producto}</td>
+                            <td>${producto.marca}</td>
+                            <td>${producto.numero_factura}</td>
+                            <td>${producto.proveedor}</td>
+                            <td>Q${producto.precio_costo.toFixed(2)}</td>
+                            <td>Q${producto.precio_publico.toFixed(2)}</td>
+                            <td>Q${producto.ganancia.toFixed(2)}</td>
                         </tr>`;
                     tableBody.innerHTML += row;
                 });
@@ -56,3 +72,4 @@
     </script>
 </body>
 </html>
+

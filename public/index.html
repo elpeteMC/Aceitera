@@ -19,8 +19,13 @@
                     <tr>
                         <th>ID</th>
                         <th>Nombre</th>
-                        <th>Precio</th>
                         <th>Cantidad</th>
+                        <th>Código de Barras</th>
+                        <th>Código de Producto</th>
+                        <th>Marca</th>
+                        <th>Proveedor</th>
+                        <th>Precio Público (Q)</th>
+                        <th>Ganancia (Q)</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -55,7 +60,7 @@
                 const productos = await response.json();
                 
                 if (productos.length === 0) {
-                    container.innerHTML = `<tr><td colspan="5" class="text-center">No hay productos disponibles</td></tr>`;
+                    container.innerHTML = `<tr><td colspan="10" class="text-center">No hay productos disponibles</td></tr>`;
                     return;
                 }
 
@@ -64,8 +69,13 @@
                     row.innerHTML = `
                         <td>${producto.id}</td>
                         <td>${producto.nombre}</td>
-                        <td>Q${producto.precio.toFixed(2)}</td>
-                        <td>${producto.cantidad}</td>
+                        <td>${producto.cantidad_existencia}</td>
+                        <td>${producto.codigo_barras}</td>
+                        <td>${producto.codigo_producto}</td>
+                        <td>${producto.marca}</td>
+                        <td>${producto.proveedor}</td>
+                        <td>Q${producto.precio_publico.toFixed(2)}</td>
+                        <td>Q${producto.ganancia.toFixed(2)}</td>
                         <td>
                             <button class="btn btn-danger btn-sm" onclick="eliminarProducto(${producto.id})">Eliminar</button>
                         </td>
@@ -80,26 +90,25 @@
 
         // Función para eliminar un producto
         async function eliminarProducto(id) {
-    console.log('Intentando eliminar producto con ID:', id);
-    try {
-        const response = await fetch(`https://aceitera.onrender.com/productos/${id}`, {
-            method: 'DELETE',
-        });
-        console.log('Respuesta del servidor:', response);
+            console.log('Intentando eliminar producto con ID:', id);
+            try {
+                const response = await fetch(`https://aceitera.onrender.com/productos/${id}`, {
+                    method: 'DELETE',
+                });
+                console.log('Respuesta del servidor:', response);
 
-        if (!response.ok) {
-            const errorMsg = await response.json();
-            throw new Error(errorMsg.error || 'Error desconocido');
+                if (!response.ok) {
+                    const errorMsg = await response.json();
+                    throw new Error(errorMsg.error || 'Error desconocido');
+                }
+
+                alert('Producto eliminado con éxito');
+                cargarProductos();
+            } catch (error) {
+                console.error('Error al eliminar producto:', error);
+                alert('No se pudo eliminar el producto. Intenta de nuevo.');
+            }
         }
-
-        alert('Producto eliminado con éxito');
-        cargarProductos();
-    } catch (error) {
-        console.error('Error al eliminar producto:', error);
-        alert('No se pudo eliminar el producto. Intenta de nuevo.');
-    }
-}
-
 
         // Cargar los productos al cargar la página
         document.addEventListener('DOMContentLoaded', cargarProductos);
